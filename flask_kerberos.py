@@ -86,14 +86,16 @@ def _gssapi_authenticate(token):
             kerberos.authGSSServerClean(state)
 
 
-def requires_authentication(function):
+def requires_authentication(function, cache=None):
     '''
     Require that the wrapped view function only be called by users
     authenticated with Kerberos. The view function will have the authenticated
     users principal passed to it as its first argument.
-
+    
     :param function: flask view function
     :type function: function
+    :param cache: optional ticket caching handler
+    :type cache: object
     :returns: decorated function
     :rtype: function
     '''
@@ -103,7 +105,16 @@ def requires_authentication(function):
         if header:
             ctx = stack.top
             token = ''.join(header.split()[1:])
-            rc = _gssapi_authenticate(token)
+            if cache and cache.user and cache.token:
+				ctx.kerberos_user = cache.user
+				ctx.kerberos_token = cache.token
+				rc = kerberos.AUTH_GSS_COMPLETE
+			else:
+				rc = _gssapi_authenticate(token)
+				if cache:
+					cache.user = ctx.kerberos_user
+					cache.token = ctx.kerberos_token
+			
             if rc == kerberos.AUTH_GSS_COMPLETE:
                 response = function(ctx.kerberos_user, *args, **kwargs)
                 response = make_response(response)
