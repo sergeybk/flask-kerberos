@@ -106,15 +106,15 @@ def requires_authentication(function, cache=None):
             ctx = stack.top
             token = ''.join(header.split()[1:])
             if cache and cache.user and cache.token:
-				ctx.kerberos_user = cache.user
-				ctx.kerberos_token = cache.token
-				rc = kerberos.AUTH_GSS_COMPLETE
-			else:
-				rc = _gssapi_authenticate(token)
-				if cache:
-					cache.user = ctx.kerberos_user
-					cache.token = ctx.kerberos_token
-			
+                ctx.kerberos_user = cache.user
+                ctx.kerberos_token = cache.token
+                rc = kerberos.AUTH_GSS_COMPLETE
+            else:
+                rc = _gssapi_authenticate(token)
+                if cache:
+                    cache.user = ctx.kerberos_user
+                    cache.token = ctx.kerberos_token
+                    
             if rc == kerberos.AUTH_GSS_COMPLETE:
                 response = function(ctx.kerberos_user, *args, **kwargs)
                 response = make_response(response)
